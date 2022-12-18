@@ -1,0 +1,15 @@
+//
+// Created by clanzy on 07.12.22.
+//
+
+#ifndef FILE_SERVER_CONSTANTS_H
+#define FILE_SERVER_CONSTANTS_H
+
+#define FILENAME_LENGTH 100
+#define BUFFER_LENGTH 65536
+#define PERMISSIONS (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+
+
+
+
+#endif //FILE_SERVER_CONSTANTS_H

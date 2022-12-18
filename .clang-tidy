@@ -1,0 +1,1 @@
+Checks: 'readability-*,cert-*,llvm-*,misc-*,clang-diagnostic-*,-readability-identifier-length,-llvm-include-order,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling'
