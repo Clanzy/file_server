@@ -9,12 +9,14 @@
 
 int start_client(const char *addr, const char *port)
 {
-	if (init_client(addr, port) == -1) {
+	int sockfd = init_client(addr, port);
+	if ( sockfd == -1) {
 		perror("init_client()");
 		return -1;
 	}
-	printf("Enter your username: ");
+	//printf("Enter your username: ");
 	//TODO username input
+	return sockfd;
 }
 
 void print_help()
@@ -49,9 +51,9 @@ void upload_files(int sockfd, char *arguments)
 {
 	char *token;
 	char *temp;
-	for_each_token(token, arguments, " ", temp) {
+	for_each_token(token, arguments, " \n\t", temp) {
 		request_upload(sockfd, token);
-		//server downloads all files and sends success
+		//server downloads a file and sends success
 		get_responce(sockfd);
 	}
 }
@@ -60,9 +62,10 @@ void download_files(int sockfd, char *arguments)
 {
 	char *token;
 	char *temp;
-	for_each_token(token, arguments, " ", temp) {
+	for_each_token(token, arguments, " \n\t", temp) {
 		request_download(sockfd, token);
 		//server sends a file
+		drop_first_byte(sockfd);
 		download_file(sockfd);
 	}
 }

@@ -12,12 +12,10 @@
 #include <fcntl.h>
 #include <string.h>
 
-
 // common functions
 
 int send_file(int sockfd, char *fpath, int bytes_used);
 int download_file(int sockfd);
-
 
 // client side
 
@@ -35,5 +33,8 @@ int get_responce(int sockfd);
 // server side
 
 int init_server(const char *addr, const char *port);
+
+void handle_connection(int sockfd);
+void drop_first_byte(int sockfd);
 
 #endif

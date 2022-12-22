@@ -26,6 +26,7 @@ void encode_delete(char *buffer, char *args)
 	char *tmp;
 	for_each_token(token, args, " ", tmp) {
 		strcat(buffer, token);
+		strcat(buffer, " ");
 	}
 }
 
@@ -34,10 +35,12 @@ int encode_upload(char *fpath, char *buffer, int *bytes_used)
 	enum Operations temp = UPLOAD;
 	memcpy(buffer, &temp, sizeof temp);
 	buffer = buffer + sizeof temp;
+	*bytes_used = *bytes_used + sizeof temp;
 
 	/* Get and encode file size as signed 64-bit integer */
 	struct stat info;
 	if (stat(fpath, &info) == -1) {
+		printf("fpath: %s\n", fpath);
 		perror("stat()");
 		return -1;
 	}
@@ -64,8 +67,9 @@ int encode_upload(char *fpath, char *buffer, int *bytes_used)
 			FILENAME_LENGTH);
 		return -1;
 	}
-	memcpy(buffer, fname, fname_len);
-	*bytes_used = sizeof temp + sizeof size + FILENAME_LENGTH;
+	*bytes_used = *bytes_used + sizeof size;
+	memcpy(buffer, fname, FILENAME_LENGTH);
+	*bytes_used = *bytes_used + FILENAME_LENGTH;
 
 	return 0;
 }
@@ -80,6 +84,13 @@ void encode_download(char *fpath, char *buffer)
 	memcpy(buffer, fpath, len);
 }
 
+void encode_responce(char *buffer)
+{
+	enum Operations temp = SUCCESS;
+	memcpy(buffer, &temp, sizeof temp);
+	//buffer = buffer + sizeof temp;
+}
+
 enum Operations decode_first_byte(char *buffer)
 {
 	enum Operations temp;
@@ -88,15 +99,13 @@ enum Operations decode_first_byte(char *buffer)
 }
 
 void decode_download(char *buffer, char *fname, uint64_t *filesize,
-		    int *bytes_read)
+		     int *bytes_read)
 {
 	memcpy(filesize, buffer, sizeof *filesize);
 	*filesize = ntohll(*filesize);
 	buffer += sizeof *filesize;
 
-	if (fname) {
-		memcpy(fname, buffer, FILENAME_LENGTH);
-	}
+	memcpy(fname, buffer, FILENAME_LENGTH);
 
 	*bytes_read = sizeof *filesize + FILENAME_LENGTH;
 }

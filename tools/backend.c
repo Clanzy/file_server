@@ -2,8 +2,13 @@
 #include "utilities.h"
 #include "request.h"
 #include "constants.h"
+#include <dirent.h>
 
 extern char buffer[BUFFER_LENGTH];
+
+void drop_first_byte(int sockfd){
+	recv(sockfd, buffer, 1, 0);
+}
 
 int download_loop(uint64_t filesize, int fd, int sock)
 {
@@ -36,9 +41,15 @@ int download_loop(uint64_t filesize, int fd, int sock)
 	return 0;
 }
 
+void printbytes(){
+	for(int i = 0; i < 120; i++){
+		printf("%d: %c\n", i, buffer[i]);
+	}
+}
+
 int download_file(int sockfd)
 {
-	if (recv(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
+	if (recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL) <= 0) {
 		perror("recv()");
 		return -1;
 	}
@@ -47,8 +58,10 @@ int download_file(int sockfd)
 
 	uint64_t filesize;
 	int bytes_read;
-	decode_download(buffer + 1, filename, &filesize, &bytes_read);
+	decode_download(buffer, filename, &filesize, &bytes_read);
 
+
+	printf("downloading file %s %ld\n", filename, filesize);
 	int fd = open(filename, O_CREAT | O_WRONLY, PERMISSIONS);
 	if (fd == -1) {
 		perror("open()");
@@ -56,12 +69,12 @@ int download_file(int sockfd)
 	}
 
 	if (write(fd, buffer + bytes_read,
-		  min(BUFFER_LENGTH - bytes_read, filesize))) {
+		  min(BUFFER_LENGTH - bytes_read, filesize)) <= 0) {
 		perror("write()");
 		close(fd);
 		return -1;
 	}
-	filesize -= (BUFFER_LENGTH - bytes_read);
+	filesize -= min(BUFFER_LENGTH - bytes_read, filesize);
 
 	if (download_loop(filesize, fd, sockfd) == -1) {
 		perror("download_loop()");
@@ -87,12 +100,12 @@ int send_loop(char *bufferptr, int bytes_used, int fd, int sock)
 			return -1;
 		}
 
-		bytes_used = 0;
-
-		int length = bytes_read;
+		int length = bytes_read + bytes_used;
 		char *current = bufferptr;
+		bytes_used = 0;
 		while (length > 0) {
 			rc = send(sock, current, length, 0);
+			printf("bytes sent %d\n", rc);
 			if (rc == -1) {
 				perror("send()");
 				close(fd);
@@ -126,9 +139,4 @@ int send_file(int sockfd, char *fpath, int bytes_used)
 	}
 
 	return 0;
-}
-
-int handle_sockets(int sockfd, int max_conn)
-{
-
 }

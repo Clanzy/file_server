@@ -22,32 +22,29 @@ int request_list(int sockfd)
 
 int procceed_fnames_buffer(char *buff)
 {
-	for (int i = 0, start = 0; i < BUFFER_LENGTH; i++) {
-		if (buff[i] == '\0') {
-			/* End of request (\0 right after another \0).
-			 * Server still has more fnames that will come with next recv
-			 */
-			if (i == start) {
-				return 0;
-			}
-			printf("%s", buff + start);
-			start = i + 1;
+	char *token;
+	char *temp;
+	for_each_token(token, buff, " ", temp) {
+		if (strcmp(token, "/") == 0) {
+			return 0;
 		}
+		printf("%s\n", token);
 	}
 	return 1;
 }
 
 int procceed_list(int sockfd)
 {
-	int rc = recv(sockfd, buffer, BUFFER_LENGTH, 0);
+	int rc = recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL);
 	if (rc == -1) {
 		perror("recv()");
 		return -1;
 	}
 	if (rc == 0) {
 		perror("server probably closed");
-		return -1;
+		return 0;
 	}
+
 	if (procceed_fnames_buffer(buffer) == 0) {
 		/* Returns success code */
 		return 0;
@@ -65,6 +62,8 @@ int request_delete(int sockfd, char *arguments)
 	}
 	return 0;
 }
+
+
 
 int request_upload(int sockfd, char *fpath)
 {
@@ -140,5 +139,9 @@ int init_client(const char *addr, const char *port)
 
 int get_responce(int sockfd)
 {
+	if (recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL) <= 0) {
+		perror("recv()");
+		return -1;
+	}
 	return 0;
 }

@@ -8,7 +8,7 @@
 
 int main()
 {
-	int sockfd = init_server("127.0.0.1", "7777");
+	int sockfd = init_server("127.0.0.1", "7778");
 
 	if (listen(sockfd, MAX_CONNECTIONS) == -1) {
 		perror("listen()");
@@ -24,7 +24,10 @@ int main()
 			return -1;
 		}
 
+		handle_connection(connfd);
+
 		close(connfd);
 	}
+	close(sockfd);
 	return 0;
 }
