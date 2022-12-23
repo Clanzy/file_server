@@ -41,12 +41,6 @@ int download_loop(uint64_t filesize, int fd, int sock)
 	return 0;
 }
 
-void printbytes(){
-	for(int i = 0; i < 120; i++){
-		printf("%d: %c\n", i, buffer[i]);
-	}
-}
-
 int download_file(int sockfd)
 {
 	if (recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL) <= 0) {
@@ -61,7 +55,7 @@ int download_file(int sockfd)
 	decode_download(buffer, filename, &filesize, &bytes_read);
 
 
-	printf("downloading file %s %ld\n", filename, filesize);
+	printf("Downloading file %s (%ld bytes)\n", filename, filesize);
 	int fd = open(filename, O_CREAT | O_WRONLY, PERMISSIONS);
 	if (fd == -1) {
 		perror("open()");
@@ -132,6 +126,7 @@ int send_file(int sockfd, char *fpath, int bytes_used)
 		perror("open()");
 		return -1;
 	}
+	printf("Sending file %s\n", fpath);
 	if (send_loop(bufferptr, bytes_used, fd, sockfd) == -1) {
 		perror("send_loop()");
 		close(fd);

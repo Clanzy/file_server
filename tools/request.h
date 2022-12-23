@@ -1,9 +1,4 @@
-//
-// Created by clanzy on 05.12.22.
-//
-
-#ifndef FILE_SERVER_REQUEST_H
-#define FILE_SERVER_REQUEST_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -31,5 +26,3 @@ void encode_responce(char *buffer);
 
 enum Operations decode_first_byte(char *buffer);
 void decode_download(char *buffer, char *fname, uint64_t *filesize, int *bytes_read);
-
-#endif //FILE_SERVER_REQUEST_H

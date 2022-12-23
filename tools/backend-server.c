@@ -59,39 +59,38 @@ int init_server(const char *addr, const char *port)
 
 int write_fnames_buffer(char *buff)
 {
-	static DIR *d = NULL;
-	if (!d) {
-		d = opendir(".");
-	}
+	static DIR *d;
 	static struct dirent *dir;
-	int i = 1;
+	int used = 1;
 	buff[0] = '\0';
 
-	static char *carryover = NULL;
-	if (carryover != NULL) {
-		int len = strlen(carryover);
-		strncat(buff + i - 1, dir->d_name, len);
-		i += len;
-		carryover = NULL;
+	if (d == NULL) {
+		d = opendir(".");
+	} else if (dir != NULL) {
+		int filelen = strlen(dir->d_name);
+		(void)sprintf(buff, "%s %s", buff, dir->d_name);
+		used += filelen;
 	}
+
 	if (d) {
 		while ((dir = readdir(d)) != NULL) {
-			int len = strlen(dir->d_name);
-			if (BUFFER_LENGTH - i < len + 1) {
-				buff[i] = '\0';
-				carryover = dir->d_name;
+			int filelen = strlen(dir->d_name);
+			if (used + filelen + 1 > FILENAME_LENGTH) {
 				return 1;
 			}
-			strncat(buff + i - 1, dir->d_name, len);
-			i += len;
-			strncat(buff + i - 1, " ", 1);
-			i += 1;
+
+			(void)sprintf(buff, "%s %s", buff, dir->d_name);
+			used += filelen;
 		}
 
-		if (BUFFER_LENGTH - i < 2) {
+		dir = NULL;
+
+		if (used + 1 + 1 > FILENAME_LENGTH) {
 			return 1;
 		}
-		strncat(buff + i - 1, "/", 1);
+
+		(void)sprintf(buff, "%s /", buff);
+
 		closedir(d);
 		d = NULL;
 		return 0;
@@ -99,12 +98,32 @@ int write_fnames_buffer(char *buff)
 	return -1;
 }
 
-int delete_files(char *buffer)
+int send_filenames(int sockfd)
 {
+	while (write_fnames_buffer(buffer) == 1) {
+		if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
+			perror("send()");
+			return -1;
+		}
+	}
+	if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
+		perror("send()");
+		return -1;
+	}
+	printf("Sent filenames\n");
+	return 0;
+}
+
+int delete_files(int sockfd, char *buffer)
+{
+	if (recv(sockfd, buffer, BUFFER_LENGTH-1, 0) <= 0) {
+		perror("recv()");
+		return -1;
+	}
 	char *token;
 	char *temp;
 	for_each_token(token, buffer, " \n\t", temp) {
-		printf("deleted file: %s\n", token);
+		printf("Deleted file: %s\n", token);
 		if (remove(token) == -1) {
 			perror("remove()");
 		}
@@ -112,9 +131,28 @@ int delete_files(char *buffer)
 	return 0;
 }
 
+int send_responce(int sockfd, char *buffer)
+{
+	encode_responce(buffer);
+	if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
+		perror("send()");
+		return -1;
+	}
+	return 0;
+}
+
+int get_fname(int sockfd, char *buffer, char *fname)
+{
+	if (recv(sockfd, buffer, BUFFER_LENGTH - 1, MSG_WAITALL) <= 0) {
+		perror("recv()");
+		return -1;
+	}
+	memcpy(fname, buffer, FILENAME_LENGTH);
+	return 0;
+}
+
 void handle_connection(int sockfd)
 {
-	static char fname[FILENAME_LENGTH];
 	for (;;) {
 		memset(buffer, 0, BUFFER_LENGTH);
 		if (recv(sockfd, buffer, 1, MSG_WAITALL) <= 0) {
@@ -123,52 +161,47 @@ void handle_connection(int sockfd)
 		}
 		enum Operations op = decode_first_byte(buffer);
 
+		static char fname[FILENAME_LENGTH];
 		int bytes_used;
 		switch (op) {
 		case LIST:
-			while (write_fnames_buffer(buffer) == 1) {
-				if (send(sockfd, buffer, BUFFER_LENGTH, 0) <=
-				    0) {
-					perror("send()");
-					return;
-				}
+			if (recv(sockfd, buffer, BUFFER_LENGTH-1, MSG_WAITALL) <= 0) {
+				perror("recv()");
+				return;
 			}
-			if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
-				perror("send()");
+			if (send_filenames(sockfd) == -1) {
+				perror("send_filenames()");
 				return;
 			}
 			break;
 
 		case DELETE:
-			if (recv(sockfd, buffer, BUFFER_LENGTH, 0) <=
-			    0) {
-				perror("recv()");
+			if (delete_files(sockfd, buffer) == -1) {
+				perror("delete_files()");
 				return;
 			}
-			delete_files(buffer);
-			encode_responce(buffer);
-			if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
-				perror("send()");
+			if (send_responce(sockfd, buffer) == -1) {
+				perror("send_responce()");
 				return;
 			}
 			break;
 
 		case UPLOAD:
-			download_file(sockfd);
-			encode_responce(buffer);
-			if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
-				perror("send()");
+			if (download_file(sockfd) == -1) {
+				perror("download_file()");
+				return;
+			}
+			if (send_responce(sockfd, buffer) == -1) {
+				perror("send_responce()");
 				return;
 			}
 			break;
 
 		case DOWNLOAD:
-			if (recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL) ==
-			    -1) {
-				perror("recv()");
+			if (get_fname(sockfd, buffer, fname) == -1) {
+				perror("get_fname()");
 				return;
 			}
-			memcpy(fname, buffer, FILENAME_LENGTH);
 
 			if (encode_upload(fname, buffer, &bytes_used) == -1) {
 				perror("encode_upload()");

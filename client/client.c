@@ -31,6 +31,8 @@ int main()
 				upload_files(sockfd, arguments);
 			} else if (strcmp(command, "delete") == 0) {
 				delete_files(sockfd, arguments);
+			} else if (strcmp(command, "exit") == 0) {
+				close(sockfd);
 			}
 		} else {
 			printf("Bad input. Type 'help' to list all available commands.\n");
