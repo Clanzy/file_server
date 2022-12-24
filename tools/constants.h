@@ -1,15 +1,9 @@
-//
-// Created by clanzy on 07.12.22.
-//
-
-#ifndef FILE_SERVER_CONSTANTS_H
-#define FILE_SERVER_CONSTANTS_H
+#pragma once
 
 #define FILENAME_LENGTH 256
 #define BUFFER_LENGTH 65536
 #define PERMISSIONS (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
+#define PORT "7778"
+#define ADDRESS "127.0.0.1"
 
-
-
-#endif //FILE_SERVER_CONSTANTS_H

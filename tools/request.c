@@ -10,6 +10,8 @@
 #include "utilities.h"
 #include "constants.h"
 
+int g_upload_download_header_length = FILENAME_LENGTH + sizeof(uint64_t);
+
 void encode_list(char *buffer)
 {
 	enum Operations temp = LIST;
@@ -30,12 +32,11 @@ void encode_delete(char *buffer, char *args)
 	}
 }
 
-int encode_upload(char *fpath, char *buffer, int *bytes_used)
+int encode_upload(char *fpath, char *buffer)
 {
 	enum Operations temp = UPLOAD;
 	memcpy(buffer, &temp, sizeof temp);
 	buffer = buffer + sizeof temp;
-	*bytes_used = *bytes_used + sizeof temp;
 
 	/* Get and encode file size as signed 64-bit integer */
 	struct stat info;
@@ -67,9 +68,7 @@ int encode_upload(char *fpath, char *buffer, int *bytes_used)
 			FILENAME_LENGTH);
 		return -1;
 	}
-	*bytes_used = *bytes_used + sizeof size;
 	memcpy(buffer, fname, FILENAME_LENGTH);
-	*bytes_used = *bytes_used + FILENAME_LENGTH;
 
 	return 0;
 }
@@ -98,14 +97,11 @@ enum Operations decode_first_byte(char *buffer)
 	return temp;
 }
 
-void decode_download(char *buffer, char *fname, uint64_t *filesize,
-		     int *bytes_read)
+void decode_download(char *buffer, char *fname, uint64_t *filesize)
 {
 	memcpy(filesize, buffer, sizeof *filesize);
 	*filesize = ntohll(*filesize);
 	buffer += sizeof *filesize;
 
 	memcpy(fname, buffer, FILENAME_LENGTH);
-
-	*bytes_read = sizeof *filesize + FILENAME_LENGTH;
 }

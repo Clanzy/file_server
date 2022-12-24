@@ -69,11 +69,11 @@ int request_upload(int sockfd, char *fpath)
 {
 	int bytes_used;
 
-	if (encode_upload(fpath, buffer, &bytes_used) == -1) {
+	if (encode_upload(fpath, buffer) == -1) {
 		perror("encode_upload()");
 		return -1;
 	}
-	if (send_file(sockfd, fpath, bytes_used) == -1) {
+	if (send_file(sockfd, fpath, g_upload_download_header_length) == -1) {
 		perror("send_file()");
 		return -1;
 	}

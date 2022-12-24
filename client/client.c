@@ -4,10 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#define PORT "7778"
+#define ADDRESS "127.0.0.1"
+
 int main()
 {
 #define BUFFER_SIZE 2048
-	int sockfd = start_client("127.0.0.1", "7778");
+	int sockfd = start_client(ADDRESS, PORT);
 	if (sockfd == -1) {
 		perror("start_client()");
 		return -1;
@@ -33,9 +36,10 @@ int main()
 				delete_files(sockfd, arguments);
 			} else if (strcmp(command, "exit") == 0) {
 				close(sockfd);
+				break;
+			} else {
+				printf("Bad input. Type 'help' to list all available commands.\n");
 			}
-		} else {
-			printf("Bad input. Type 'help' to list all available commands.\n");
 		}
 	}
 	close(sockfd);

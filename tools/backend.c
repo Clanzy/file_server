@@ -6,13 +6,15 @@
 
 extern char buffer[BUFFER_LENGTH];
 
-void drop_first_byte(int sockfd){
+void drop_first_byte(int sockfd)
+{
 	recv(sockfd, buffer, 1, 0);
 }
 
 int download_loop(uint64_t filesize, int fd, int sock)
 {
 	char *bufferptr = buffer;
+	uint64_t stored_filesize = filesize;
 	while (filesize > 0) {
 		int length = min(BUFFER_LENGTH, filesize);
 		filesize -= length;
@@ -32,7 +34,8 @@ int download_loop(uint64_t filesize, int fd, int sock)
 			length -= rc;
 			current += rc;
 		}
-		if (write(fd, bufferptr, BUFFER_LENGTH - length) == -1) {
+		if (write(fd, bufferptr,
+			  min(BUFFER_LENGTH - length, stored_filesize)) == -1) {
 			perror("write()");
 			close(fd);
 			return -1;
@@ -43,7 +46,8 @@ int download_loop(uint64_t filesize, int fd, int sock)
 
 int download_file(int sockfd)
 {
-	if (recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL) <= 0) {
+	if (recv(sockfd, buffer, g_upload_download_header_length,
+		 MSG_WAITALL) <= 0) {
 		perror("recv()");
 		return -1;
 	}
@@ -51,9 +55,7 @@ int download_file(int sockfd)
 	static char filename[FILENAME_LENGTH];
 
 	uint64_t filesize;
-	int bytes_read;
-	decode_download(buffer, filename, &filesize, &bytes_read);
-
+	decode_download(buffer, filename, &filesize);
 
 	printf("Downloading file %s (%ld bytes)\n", filename, filesize);
 	int fd = open(filename, O_CREAT | O_WRONLY, PERMISSIONS);
@@ -61,14 +63,6 @@ int download_file(int sockfd)
 		perror("open()");
 		return -1;
 	}
-
-	if (write(fd, buffer + bytes_read,
-		  min(BUFFER_LENGTH - bytes_read, filesize)) <= 0) {
-		perror("write()");
-		close(fd);
-		return -1;
-	}
-	filesize -= min(BUFFER_LENGTH - bytes_read, filesize);
 
 	if (download_loop(filesize, fd, sockfd) == -1) {
 		perror("download_loop()");
@@ -99,7 +93,7 @@ int send_loop(char *bufferptr, int bytes_used, int fd, int sock)
 		bytes_used = 0;
 		while (length > 0) {
 			rc = send(sock, current, length, 0);
-			printf("bytes sent %d\n", rc);
+			//printf("bytes sent %d\n", rc);
 			if (rc == -1) {
 				perror("send()");
 				close(fd);
@@ -127,7 +121,7 @@ int send_file(int sockfd, char *fpath, int bytes_used)
 		return -1;
 	}
 	printf("Sending file %s\n", fpath);
-	if (send_loop(bufferptr, bytes_used, fd, sockfd) == -1) {
+	if (send_loop(bufferptr, bytes_used + 1, fd, sockfd) == -1) {
 		perror("send_loop()");
 		close(fd);
 		return -1;

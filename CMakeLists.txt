@@ -17,8 +17,5 @@ add_executable(client client/client.c ${TOOLS_FILES} ${CLIENT_FILES})
 target_include_directories(server PRIVATE tools)
 target_include_directories(client PRIVATE tools)
 
-target_link_libraries(server PRIVATE pthread)
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-

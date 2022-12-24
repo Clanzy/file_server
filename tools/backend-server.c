@@ -162,7 +162,6 @@ void handle_connection(int sockfd)
 		enum Operations op = decode_first_byte(buffer);
 
 		static char fname[FILENAME_LENGTH];
-		int bytes_used;
 		switch (op) {
 		case LIST:
 			if (recv(sockfd, buffer, BUFFER_LENGTH-1, MSG_WAITALL) <= 0) {
@@ -203,11 +202,11 @@ void handle_connection(int sockfd)
 				return;
 			}
 
-			if (encode_upload(fname, buffer, &bytes_used) == -1) {
+			if (encode_upload(fname, buffer) == -1) {
 				perror("encode_upload()");
 				return;
 			}
-			if (send_file(sockfd, fname, bytes_used) == -1) {
+			if (send_file(sockfd, fname, g_upload_download_header_length) == -1) {
 				perror("send_file()");
 				return;
 			}

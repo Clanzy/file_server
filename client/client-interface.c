@@ -10,7 +10,7 @@
 int start_client(const char *addr, const char *port)
 {
 	int sockfd = init_client(addr, port);
-	if ( sockfd == -1) {
+	if (sockfd == -1) {
 		perror("init_client()");
 		return -1;
 	}
@@ -22,7 +22,6 @@ int start_client(const char *addr, const char *port)
 void print_help()
 {
 	static char *help =
-		"You have successfully connected to the file server.\n"
 		"Commands:\n"
 		"\tlist - prints the names of all files that are stored on the server.\n"
 		"\tdownload <filename> [<filename> ...] - downloads one or more from the server to a current directory.\n"
