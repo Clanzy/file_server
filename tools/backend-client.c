@@ -1,6 +1,3 @@
-//
-// Created by clanzy on 07.12.22.
-//
 #include "backend.h"
 #include "constants.h"
 #include "request.h"

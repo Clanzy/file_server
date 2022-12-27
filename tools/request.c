@@ -1,7 +1,3 @@
-//
-// Created by clanzy on 05.12.22.
-//
-
 #include <string.h>
 #include <sys/stat.h>
 #include <stdio.h>

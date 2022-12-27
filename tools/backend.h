@@ -1,5 +1,4 @@
-#ifndef FILE_SERVER_BACKEND_H
-#define FILE_SERVER_BACKEND_H
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -36,5 +35,3 @@ int init_server(const char *addr, const char *port);
 
 void handle_connection(int sockfd);
 void drop_first_byte(int sockfd);
-
-#endif

@@ -1,7 +1,3 @@
-//
-// Created by clanzy on 04.12.22.
-//
-
 #include <stdio.h>
 #include "client-interface.h"
 #include "backend.h"
