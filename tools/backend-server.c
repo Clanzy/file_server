@@ -152,8 +152,13 @@ void handle_connection(int sockfd)
 {
 	for (;;) {
 		memset(buffer, 0, BUFFER_LENGTH);
-		if (recv(sockfd, buffer, 1, MSG_WAITALL) <= 0) {
+		int rc = recv(sockfd, buffer, 1, MSG_WAITALL);
+		if ( rc == -1) {
 			perror("recv()");
+			return;
+		}
+		if(rc == 0){
+			printf("Connection terminated by user\n");
 			return;
 		}
 		enum Operations op = decode_first_byte(buffer);
@@ -161,10 +166,6 @@ void handle_connection(int sockfd)
 		static char fname[FILENAME_LENGTH];
 		switch (op) {
 		case LIST:
-			if (recv(sockfd, buffer, BUFFER_LENGTH-1, MSG_WAITALL) <= 0) {
-				perror("recv()");
-				return;
-			}
 			if (send_filenames(sockfd) == -1) {
 				perror("send_filenames()");
 				return;

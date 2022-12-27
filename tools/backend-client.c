@@ -10,7 +10,7 @@ char buffer[BUFFER_LENGTH];
 int request_list(int sockfd)
 {
 	encode_list(buffer);
-	if (send(sockfd, buffer, BUFFER_LENGTH, 0) <= 0) {
+	if (send(sockfd, buffer, 1, 0) <= 0) {
 		perror("send()");
 		return -1;
 	}
@@ -21,7 +21,7 @@ int procceed_fnames_buffer(char *buff)
 {
 	char *token;
 	char *temp;
-	for_each_token(token, buff, " ", temp) {
+	for_each_token(token, buff, " \f\n\r\t\v", temp) {
 		if (strcmp(token, "/") == 0) {
 			return 0;
 		}
@@ -33,13 +33,9 @@ int procceed_fnames_buffer(char *buff)
 int procceed_list(int sockfd)
 {
 	int rc = recv(sockfd, buffer, BUFFER_LENGTH, MSG_WAITALL);
-	if (rc == -1) {
+	if (rc <= 0) {
 		perror("recv()");
 		return -1;
-	}
-	if (rc == 0) {
-		perror("server probably closed");
-		return 0;
 	}
 
 	if (procceed_fnames_buffer(buffer) == 0) {
@@ -59,8 +55,6 @@ int request_delete(int sockfd, char *arguments)
 	}
 	return 0;
 }
-
-
 
 int request_upload(int sockfd, char *fpath)
 {
@@ -101,7 +95,7 @@ int init_client(const char *addr, const char *port)
 	struct addrinfo *result;
 	rc = getaddrinfo(addr, port, &hints, &result);
 	if (rc != 0) {
-		perror("getaddrinfo");
+		perror("getaddrinfo()");
 		return -1;
 	}
 

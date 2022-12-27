@@ -23,8 +23,7 @@ void encode_delete(char *buffer, char *args)
 	char *token;
 	char *tmp;
 	for_each_token(token, args, " ", tmp) {
-		strcat(buffer, token);
-		strcat(buffer, " ");
+		(void)sprintf("%s %s", buffer, token);
 	}
 }
 

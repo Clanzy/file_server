@@ -23,7 +23,7 @@ int main()
 		if (fgets(buffer, sizeof buffer, stdin)) {
 			char *command;
 			char *arguments;
-			command = strtok_r(buffer, " \n\t", &arguments);
+			command = strtok_r(buffer, " \f\n\r\t\v", &arguments);
 			if (strcmp(command, "help") == 0) {
 				print_help();
 			} else if (strcmp(command, "list") == 0) {

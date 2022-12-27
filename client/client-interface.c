@@ -46,7 +46,7 @@ void upload_files(int sockfd, char *arguments)
 {
 	char *token;
 	char *temp;
-	for_each_token(token, arguments, " \n\t", temp) {
+	for_each_token(token, arguments, " \f\n\r\t\v", temp) {
 		request_upload(sockfd, token);
 		//server downloads a file and sends success
 		get_responce(sockfd);
@@ -57,7 +57,7 @@ void download_files(int sockfd, char *arguments)
 {
 	char *token;
 	char *temp;
-	for_each_token(token, arguments, " \n\t", temp) {
+	for_each_token(token, arguments, " \f\n\r\t\v", temp) {
 		request_download(sockfd, token);
 		//server sends a file
 		drop_first_byte(sockfd);

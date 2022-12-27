@@ -21,13 +21,8 @@ int download_loop(uint64_t filesize, int fd, int sock)
 		char *current = bufferptr;
 		while (length > 0) {
 			int rc = recv(sock, current, length, MSG_WAITALL);
-			if (rc == -1) {
+			if (rc <= 0) {
 				perror("recv()");
-				close(fd);
-				return -1;
-			}
-			if (rc == 0) {
-				perror("socket probably closed");
 				close(fd);
 				return -1;
 			}
